@@ -2,6 +2,7 @@ Flask
 pytesseract
 Pillow
 transformers
+opencv-python
 torch
 tf-keras
 gunicorn
