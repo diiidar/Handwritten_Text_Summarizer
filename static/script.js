@@ -2,7 +2,15 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const summaryDiv = document.getElementById("summary");
 
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+let constraints = {
+    video: {
+        facingMode: isMobile ? 'environment' : 'user'
+    }
+};
+
+navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => video.srcObject = stream)
     .catch(err => alert("Error accessing camera: " + err));
 
