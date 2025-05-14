@@ -1,0 +1,53 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCR Summarizer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1rem; }
+    #video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+    #canvas { display: none; }
+    #summary { margin-top: 1rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Capture Text and Summarize</h2>
+  <video id="video" autoplay></video>
+  <br />
+  <button onclick="capture()">Capture</button>
+  <canvas id="canvas"></canvas>
+  <div id="summary"></div>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const summaryDiv = document.getElementById("summary");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => alert("Error accessing camera: " + err));
+
+    function capture() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("image", blob, "capture.jpg");
+
+        fetch("/process", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          summaryDiv.textContent = "Summary:\n" + data.summary;
+        })
+        .catch(err => alert("Error: " + err));
+      }, "image/jpeg");
+    }
+  </script>
+</body>
+</html>
