@@ -1,15 +1,18 @@
 # app.py
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-import tensorflow as tf
 from flask import Flask, request, jsonify, render_template
 import pytesseract
-from PIL import Image
-from utils import preprocessing, summarizing
+from utils import preprocessing
 import cv2 as cv
+import math
+from transformers import BartForConditionalGeneration, BartTokenizer
+import torch
 
 
 app = Flask(__name__)
+model = BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn").to('cpu')
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-large-cnn")
 
 @app.route("/")
 def index():
@@ -26,9 +29,19 @@ def process_image():
     print('extracted text:',extracted_text) 
 
     # Summarization
-    summary = summarizing.summarize(extracted_text)
+    summary = summarize(extracted_text)
 
     return jsonify({"summary": summary})
+
+def summarize(text):
+    global device, model, tokenizer
+    word_count = len(text.split())
+    min_length = int(10 * math.sqrt(word_count + 64) - 80)
+
+    inputs = tokenizer(text, return_tensors="pt", max_length=1024, truncation=True)
+    summary_ids = model.generate(inputs["input_ids"], max_length=700, min_length=min_length, length_penalty=1.7, num_beams=4)
+
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
 if __name__ == "__main__":
     app.run(debug=True)

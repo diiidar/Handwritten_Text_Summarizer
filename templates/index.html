@@ -20,34 +20,6 @@
   <canvas id="canvas"></canvas>
   <div id="summary"></div>
 
-  <script>
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const summaryDiv = document.getElementById("summary");
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
-      .catch(err => alert("Error accessing camera: " + err));
-
-    function capture() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append("image", blob, "capture.jpg");
-
-        fetch("/process", {
-          method: "POST",
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          summaryDiv.textContent = "Summary:\n" + data.summary;
-        })
-        .catch(err => alert("Error: " + err));
-      }, "image/jpeg");
-    }
-  </script>
+  <script src="../static/script.js"></script>
 </body>
 </html>
