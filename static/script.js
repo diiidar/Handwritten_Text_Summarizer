@@ -2,7 +2,7 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const summaryDiv = document.getElementById("summary");
 
-navigator.mediaDevices.getUserMedia({ video: true })
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => video.srcObject = stream)
     .catch(err => alert("Error accessing camera: " + err));
 
