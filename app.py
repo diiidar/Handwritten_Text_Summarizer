@@ -7,7 +7,6 @@ from utils import preprocessing
 import cv2 as cv
 import math
 from transformers import BartForConditionalGeneration, BartTokenizer
-import torch
 
 
 app = Flask(__name__)
@@ -21,7 +20,7 @@ def index():
 @app.route("/process", methods=["POST"])
 def process_image():
     image_file = request.files["image"]
-    image = preprocessing.remove_grid_lines(image_file)
+    image = preprocessing.preprocess(image_file, remove_grid=False)
     cv.imwrite('result.png', image)
 
     # OCR
