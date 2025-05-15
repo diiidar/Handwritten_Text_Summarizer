@@ -4,7 +4,7 @@ import numpy as np
 import os
 from pathlib import Path
 
-def remove_grid_lines(image_file):
+def preprocess(image_file, remove_grid=False):
     # Convert uploaded file to grayscale OpenCV image
     pil_image = Image.open(image_file).convert("RGB")
     image = np.array(pil_image)
@@ -12,25 +12,32 @@ def remove_grid_lines(image_file):
 
     thresh = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_MEAN_C,
                                    cv.THRESH_BINARY_INV, 15, 10)
+    if remove_grid:
+        # Remove horizontal lines
+        horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (20, 1))
+        detected_lines = cv.morphologyEx(thresh, cv.MORPH_OPEN, horizontal_kernel, iterations=2)
+        horizontal_removed = cv.subtract(thresh, detected_lines)
 
-    # Remove horizontal lines
-    horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (20, 1))
-    detected_lines = cv.morphologyEx(thresh, cv.MORPH_OPEN, horizontal_kernel, iterations=2)
-    horizontal_removed = cv.subtract(thresh, detected_lines)
-
-    # Remove vertical lines
-    vertical_kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 24))
-    detected_lines = cv.morphologyEx(horizontal_removed, cv.MORPH_OPEN, vertical_kernel, iterations=2)
-    cleaned = cv.subtract(horizontal_removed, detected_lines)
-
+        # Remove vertical lines
+        vertical_kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 24))
+        detected_lines = cv.morphologyEx(horizontal_removed, cv.MORPH_OPEN, vertical_kernel, iterations=2)
+        cleaned = cv.subtract(horizontal_removed, detected_lines)
+    else:
+        cleaned = thresh
     # Denoising
-    denoised = cv.fastNlMeansDenoising(cleaned, h=145)
+    denoised = cv.fastNlMeansDenoising(cleaned, h=100)
 
     # Resizing for tesseract
     resized = cv.resize(denoised, None, fx=2, fy=2, interpolation=cv.INTER_CUBIC)
+
+    kernel = np.array([[0, -1, 0],
+                   [-1, 5,-1],
+                   [0, -1, 0]])
+
+    sharpened = cv.filter2D(resized, -1, kernel)
     
     # Inverting image(Tesseract expect as default black text on white background)
-    inverted = cv.bitwise_not(resized)
+    inverted = cv.bitwise_not(sharpened)
 
     return inverted
 
@@ -45,7 +52,7 @@ if __name__ == '__main__':
     for image_path in images_dir.iterdir():
         if image_path.suffix.lower() in {".jpg", ".jpeg", ".png"}:
             # Preprocess
-            preprocessed = remove_grid_lines(str(image_path))
+            preprocessed = preprocess(str(image_path), remove_grid=True)
 
             # Temporary save with OpenCV
             temp_path = output_dir / image_path.name
