@@ -4,7 +4,7 @@ import numpy as np
 import os
 from pathlib import Path
 
-def preprocess(image_file, remove_grid=False):
+def preprocess(image_file):
     # Convert uploaded file to grayscale OpenCV image
     pil_image = Image.open(image_file).convert("RGB")
     image = np.array(pil_image)
@@ -12,18 +12,16 @@ def preprocess(image_file, remove_grid=False):
 
     thresh = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_MEAN_C,
                                    cv.THRESH_BINARY_INV, 15, 10)
-    if remove_grid:
-        # Remove horizontal lines
-        horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (20, 1))
-        detected_lines = cv.morphologyEx(thresh, cv.MORPH_OPEN, horizontal_kernel, iterations=2)
-        horizontal_removed = cv.subtract(thresh, detected_lines)
+    # Remove horizontal lines
+    horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (20, 1))
+    detected_lines = cv.morphologyEx(thresh, cv.MORPH_OPEN, horizontal_kernel, iterations=2)
+    horizontal_removed = cv.subtract(thresh, detected_lines)
 
-        # Remove vertical lines
-        vertical_kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 24))
-        detected_lines = cv.morphologyEx(horizontal_removed, cv.MORPH_OPEN, vertical_kernel, iterations=2)
-        cleaned = cv.subtract(horizontal_removed, detected_lines)
-    else:
-        cleaned = thresh
+    # Remove vertical lines
+    vertical_kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 24))
+    detected_lines = cv.morphologyEx(horizontal_removed, cv.MORPH_OPEN, vertical_kernel, iterations=2)
+    cleaned = cv.subtract(horizontal_removed, detected_lines)
+    
     # Denoising
     denoised = cv.fastNlMeansDenoising(cleaned, h=100)
 

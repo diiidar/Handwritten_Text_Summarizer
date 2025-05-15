@@ -6,8 +6,8 @@ import pytesseract
 from utils import preprocessing
 import cv2 as cv
 import math
+from PIL import Image
 from transformers import BartForConditionalGeneration, BartTokenizer
-
 
 app = Flask(__name__)
 model = BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn").to('cpu')
@@ -22,8 +22,11 @@ def process_image():
     image_file = request.files["image"]
     remove_grid_line = request.form.get("removeGridLine", "false") == "true"
 
-    image = preprocessing.preprocess(image_file, remove_grid=remove_grid_line)
-    cv.imwrite('result.png', image)
+    image = Image.open(image_file).convert("RGB")
+    
+    if remove_grid_line:
+        image = preprocessing.preprocess(image_file)
+
 
     # OCR
     extracted_text = pytesseract.image_to_string(image)
