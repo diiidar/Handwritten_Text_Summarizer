@@ -18,18 +18,22 @@ function capture() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d").drawImage(video, 0, 0);
-    canvas.toBlob(blob => {
-    const formData = new FormData();
-    formData.append("image", blob, "capture.jpg");
 
-    fetch("/process", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        summaryDiv.textContent = "Summary:\n" + data.summary;
-    })
-    .catch(err => alert("Error: " + err));
+    const removeGridLine = document.getElementById('grid-line-toggle').checked;
+
+    canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("image", blob, "capture.jpg");
+        formData.append("removeGridLine", removeGridLine.toString());
+
+        fetch("/process", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            summaryDiv.textContent = "Summary:\n" + data.summary;
+        })
+        .catch(err => alert("Error: " + err));
     }, "image/jpeg");
 }

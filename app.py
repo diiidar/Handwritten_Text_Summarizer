@@ -20,7 +20,9 @@ def index():
 @app.route("/process", methods=["POST"])
 def process_image():
     image_file = request.files["image"]
-    image = preprocessing.preprocess(image_file, remove_grid=False)
+    remove_grid_line = request.form.get("removeGridLine", "false") == "true"
+
+    image = preprocessing.preprocess(image_file, remove_grid=remove_grid_line)
     cv.imwrite('result.png', image)
 
     # OCR
